@@ -1,0 +1,109 @@
+---
+title: "Data211FinalProject"
+author: "Wendy Mendoza Gutierrez"
+date: '`r Sys.Date()`'
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+
+claim1 <- data.frame(
+  Date = c("11/14", "11/15", "11/16", "11/17", 
+           "11/18", "11/19", "11/20", "11/21", 
+           "11/22", "11/23", "11/24", "11/25", 
+           "11/26", "11/27"), 
+  Worked = c("No", "Yes", "Yes", "Yes", "No", "No", "No", "No", 
+             "Yes", "Yes", "Yes", "No", "No", "Yes"), 
+  mLWater = c(3667.12, 2513.75, 3164.37, 2365.88, 2868.63, 2868.63, 
+              2632.04, 2957.35, 2513.75, 2720.76, 2336.31, 2957.35, 
+              3016.50, 2661.62)
+)
+
+# Calculate the mean of mLWater
+mean_mLWater <- claim1 %>% 
+  group_by(Worked) %>% 
+  summarize(AverageWater = mean(mLWater), na.rm=TRUE)
+mean_mLWater
+
+t_test_result <- t.test(mLWater ~ Worked, data = claim1)
+t_test_result
+```
+
+
+# Claim 1
+```{r}
+library(ggplot2)
+
+claim1_graph <- claim1 %>% 
+  ggplot(aes(x = Date, y = mLWater, group = 1)) + 
+  geom_line() + 
+  geom_point(aes(color=Worked), size=10) + 
+  labs(title = "Daily Water Consumption",
+       y = "Water Consumed (mL)",
+       x = "Date") +
+  scale_color_manual(values=c("No"="lightsteelblue3", "Yes"="thistle3")) +
+  theme_minimal()
+claim1_graph
+```
+
+## Changed to left tail test
+```{r}
+claim1b <- data.frame(
+  mLWater_Worked = c(2513.75, 3164.37, 2365.88, 2513.75, 2720.76, 2336.31, 2661.62), 
+  mLWater_Not_Worked = c(3667.12, 2868.63, 2868.63, 2632.04, 2957.35, 2898.21, 3016.60)  
+)
+
+average_worked <- mean(claim1$mLWater_Worked, na.rm = TRUE)
+average_not_worked <- mean(claim1$mLWater_Not_Worked, na.rm = TRUE)
+
+plot1 <- data.frame(
+  Worked = c("Yes", "No"),
+  AverageWater = c(average_worked, average_not_worked)
+)
+plot1
+
+t.test(claim1b$mLWater_Worked, claim1b$mLWater_Not_Worked, alternative = "less")
+
+```
+
+```{r}
+summary_data <- claim1 %>%
+  group_by(Worked) %>%
+  summarize(AverageWater = mean(mLWater, na.rm = TRUE))
+
+ggplot(summary_data, aes(x = Worked, y = AverageWater, fill = Worked)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Average Water Consumption",
+       y = "Average Water Consumed (mL)",
+       x = "Work") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Yes" = "thistle3", "No" = "lightsteelblue3")) +
+  scale_y_continuous(limits = c(0, 3250), breaks = seq(0, 3500, by = 250))
+```
+
+
+```{r}
+rec_intake <- 2700
+ggplot(claim1, aes(x = Date, y = mLWater, fill = Worked)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = rec_intake, linetype = "dashed", color = "red") +
+  labs(title = "Daily Water Consumption vs. Recommended Intake",
+       y = "Water Consumed (mL)",
+       x = "Date") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Yes" = "thistle3", "No" = "lightsteelblue3")) +
+  annotate("text", x = 3, y = rec_intake + 100, 
+           label = "Recommended Intake: 2700 mL", color = "red")
+```
+
+```{r}
+t.test(claim1$mLWater, mu=2700, alternative = "two.sided")
+```
+
